@@ -96,5 +96,23 @@ app.get('/search', (req, res) => {
     })
 })
 
+//GET request to return all teams data
+app.get('/teams', (req, res) => {
+
+    db.serialize(() => {
+
+        let stmt = `SELECT name, code, color_set FROM teams`;
+        
+        db.all(stmt, (err, rows) => {
+            if (err){
+                res.status(404)
+                res.send({"error": "Query error"})
+                return res.end()
+            }
+            res.send({count:rows.length, data:rows})
+        });
+    })
+})
+
 app.listen(port, () => {
 })

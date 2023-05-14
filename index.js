@@ -17,7 +17,11 @@ db.serialize(() => {
 });
 
 
-// Function to load data into tables from csv
+/*
+Function to load data into tables from csv
+csvPath: String - Path to csv file to insert
+query: String - Query that describes insertion for given csv table
+*/
 const loadCSV = (csvPath, query) => {
     let stream = fs.createReadStream(csvPath);
     let csvData = [];
@@ -57,6 +61,17 @@ QUERY STRINGS:
     after_date - Search for campaigns with a start date after given date
     gtebudget - Search for campaigns with a budget greater than or equal to given value
     ltebudget - Search for campaigns with a budget less than or equal to given value
+
+RETURN:
+    Count - Number of campaigns returned
+    Data
+        campaign_name
+        start_date
+        end_date 
+        budget
+        hashtags
+        team_code - Code for the team owners of campaign
+        description
 */
 app.get('/search', (req, res) => {
 

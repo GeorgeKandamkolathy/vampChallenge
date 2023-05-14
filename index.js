@@ -47,8 +47,8 @@ const loadCSV = (csvPath, query) => {
     stream.pipe(csvStream);
 }
 
-loadCSV("campaigns.csv", "INSERT OR IGNORE INTO campaigns VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-loadCSV("teams.csv", "INSERT OR IGNORE INTO teams VALUES (?, ?, ?, ?)")
+loadCSV("assets/campaigns.csv", "INSERT OR IGNORE INTO campaigns VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+loadCSV("assets/teams.csv", "INSERT OR IGNORE INTO teams VALUES (?, ?, ?, ?)")
 
 /*
 GET route to return searches from database using query parameters in URL

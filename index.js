@@ -54,7 +54,7 @@ loadCSV("teams.csv", "INSERT OR IGNORE INTO teams VALUES (?, ?, ?, ?)")
 GET route to return searches from database using query parameters in URL
 QUERY STRINGS:
     team - Code of team to search within exact match
-    name - Name of campaign to search on partial match
+    campaign_name - Name of campaign to search on partial match
     description - Partial description search
     hashtags - Hashtag search
     before_date - Search for campaigns with a start date before given date
@@ -84,7 +84,7 @@ app.get('/search', (req, res) => {
                 stmt += ` AND team_code = '${value}'`
             }
             if (key === "name" || key === "hashtags" || key === "description"){
-                stmt += ` AND ${key} LIKE '%${value}%'`
+                stmt += ` AND campaigns.${key} LIKE '%${value}%'`
             }
             else if (key == "before_date"){
                 stmt += ` AND strftime('%s', start_date) < strftime('%s', '${value}') `

@@ -53,6 +53,8 @@ loadCSV("assets/teams.csv", "INSERT OR IGNORE INTO teams VALUES (?, ?, ?, ?)")
 /*
 GET route to return searches from database using query parameters in URL
 QUERY STRINGS:
+    dir - Direction to move pagination: next, back
+    id - The id of the campagign to move backwards or forwards from passed through previous requests 
     team - Code of team to search within exact match
     campaign_name - Name of campaign to search on partial match
     description - Partial description search
@@ -72,12 +74,20 @@ RETURN:
         hashtags
         team_code - Code for the team owners of campaign
         description
+    Next - ID to move to next page
+    Back - ID to move to prev page
 */
 app.get('/search', (req, res) => {
 
+    direction = req.query['dir']
+    id = req.query['id']
+
+    delete req.query['dir']
+    delete req.query['id']
+
     db.serialize(() => {
 
-        let stmt = `SELECT campaigns.name as campaign_name, start_date, end_date, budget, hashtags, code as team_code, description FROM campaigns INNER JOIN teams ON team_id=teams.id WHERE 1=1`;
+        let stmt = `SELECT campaigns.id, campaigns.name as campaign_name, start_date, end_date, budget, hashtags, code as team_code, description FROM campaigns INNER JOIN teams ON team_id=teams.id WHERE 1=1`;
         
         for (const [key, value] of Object.entries(req.query)) {
             if(key == "team"){
@@ -100,13 +110,43 @@ app.get('/search', (req, res) => {
             }
         }
 
+        if (direction == "back"){
+            stmt += ` AND campaigns.id < '${id}' ORDER BY campaigns.id DESC LIMIT 11`
+        }
+
+        else if (direction == "next"){
+            stmt += ` AND campaigns.id > '${id}' ORDER BY campaigns.id LIMIT 11`
+        }
+        else {
+            stmt += ` ORDER BY campaigns.id LIMIT 11`
+        }
+
         db.all(stmt, (err, rows) => {
             if (err){
                 res.status(404)
                 res.send({"error": "Query error"})
                 return res.end()
             }
-            res.send({count:rows.length, data:rows})
+
+
+            if(direction == "back" || rows.length == 11){
+                data = {count:10, data:rows.slice(0,10), next:rows[9]?.id}
+                
+                if (direction == "back") {
+                    data = {...data, data:rows.slice(0,10).reverse(), next:rows.reverse()[9]?.id}
+                }
+
+            }
+            else {
+                data = {count:rows.length, data:rows}
+            }
+            if (direction != undefined && (direction == "back" && rows.length == 11) || direction == "next"){
+                data = {...data, back:rows[0]?.id}
+                if (direction == "back") {
+                    data = {...data, back:rows.reverse()[9]?.id}
+                }
+            }
+            res.send(data)
         });
     })
 })

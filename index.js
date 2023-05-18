@@ -11,6 +11,8 @@ app.use(cors())
 const db = new sqlite3.Database('test.sqlite3')
 
 
+const PAGINATION_SIZE = 10
+
 db.serialize(() => {
     db.run("CREATE TABLE IF NOT EXISTS campaigns (id INTEGER, name TEXT, start_date TEXT, end_date TEXT, budget REAL, hashtags TEXT, team_id INTEGER, description TEXT, UNIQUE(id))");
     db.run("CREATE TABLE IF NOT EXISTS teams (id INTEGER, name TEXT, code TEXT, color_set TEXT, UNIQUE(id))");
@@ -111,14 +113,14 @@ app.get('/search', (req, res) => {
         }
 
         if (direction == "back"){
-            stmt += ` AND campaigns.id < '${id}' ORDER BY campaigns.id DESC LIMIT 11`
+            stmt += ` AND campaigns.id < '${id}' ORDER BY campaigns.id DESC LIMIT ${PAGINATION_SIZE + 1}`
         }
 
         else if (direction == "next"){
-            stmt += ` AND campaigns.id > '${id}' ORDER BY campaigns.id LIMIT 11`
+            stmt += ` AND campaigns.id > '${id}' ORDER BY campaigns.id LIMIT ${PAGINATION_SIZE + 1}`
         }
         else {
-            stmt += ` ORDER BY campaigns.id LIMIT 11`
+            stmt += ` ORDER BY campaigns.id LIMIT ${PAGINATION_SIZE + 1}`
         }
 
         db.all(stmt, (err, rows) => {
@@ -129,21 +131,21 @@ app.get('/search', (req, res) => {
             }
 
 
-            if(direction == "back" || rows.length == 11){
-                data = {count:10, data:rows.slice(0,10), next:rows[9]?.id}
+            if(direction == "back" || rows.length == PAGINATION_SIZE + 1){
+                data = {count:PAGINATION_SIZE, data:rows.slice(0,PAGINATION_SIZE), next:rows[PAGINATION_SIZE - 1]?.id}
                 
                 if (direction == "back") {
-                    data = {...data, data:rows.slice(0,10).reverse(), next:rows.reverse()[9]?.id}
+                    data = {...data, data:rows.slice(0,PAGINATION_SIZE).reverse(), next:rows.reverse()[PAGINATION_SIZE - 1]?.id}
                 }
 
             }
             else {
                 data = {count:rows.length, data:rows}
             }
-            if (direction != undefined && (direction == "back" && rows.length == 11) || direction == "next"){
+            if (direction != undefined && (direction == "back" && rows.length == PAGINATION_SIZE + 1) || direction == "next"){
                 data = {...data, back:rows[0]?.id}
                 if (direction == "back") {
-                    data = {...data, back:rows.reverse()[9]?.id}
+                    data = {...data, back:rows.reverse()[PAGINATION_SIZE - 1]?.id}
                 }
             }
             res.send(data)
